@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "TTS Updates",
+  "options_page":  "options.html",
+  "version": "1.0",
+  "content_scripts": [
+    {
+	      "all_frames": true,
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "permissions": ["storage"],
+  "action": {
+    "default_icon": "icon.png",
+    "default_title": "TTS Updates"
+  },
+  	"icons": {
+        "128": "icon.png"
+    }
+}

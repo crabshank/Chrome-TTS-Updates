@@ -1,0 +1,256 @@
+var selec='';
+var voice_data='';
+var vol=0.5;
+//var selectedVoice=null; //slv.selectedOptions[0].getAttribute('data-name');
+var rte=1.2;
+const synth = window.speechSynthesis;
+var voices=[];
+//var ptch=1;
+var addrs=[];
+var slctrs=[];
+var sbl=true;
+
+function isValid_tag(tg,slc){
+	return ( ( typeof tg.matches!=='undefined' && tg.matches(slc) )?true:false);
+}
+
+function removeEls(d, array) {
+    return array.filter((a)=>{return a!=d});
+}
+
+function getSelectorAllShadow(docm, slc){
+var shrc=[docm];
+var shrc_l=1;
+
+let srCnt=0;
+
+while(srCnt<shrc_l){
+	allNodes=[shrc[srCnt],...shrc[srCnt].querySelectorAll('*')];
+	for(let i=0, len=allNodes.length; i<len; i++){
+		if(!!allNodes[i] && typeof allNodes[i] !=='undefined' && typeof allNodes[i].matches!=='undefined' && allNodes[i].matches(slc) && i>0){
+			shrc.push(allNodes[i]);
+		}
+
+		if(!!allNodes[i].shadowRoot && typeof allNodes[i].shadowRoot !=='undefined'){
+			let c=allNodes[i].shadowRoot.children;
+			shrc.push(...c);
+		}
+	}
+	srCnt++;
+	shrc_l=shrc.length;
+}
+
+	let out=shrc.filter((c)=>{return ( typeof c.matches!=='undefined' && c.matches(slc) ) ;});
+	return out;
+}
+
+function findIndexTotalInsens(string, substring, index) {
+    string = string.toLocaleLowerCase();
+    substring = substring.toLocaleLowerCase();
+    for (let i = 0; i < string.length ; i++) {
+        if ((string.includes(substring, i)) && (!(string.includes(substring, i + 1)))) {
+            index.push(i);
+            break;
+        }
+    }
+    return index;
+}
+
+function blacklistMatch(array, t) {
+    var found = false;
+	var blSite='';
+	var blSel='';
+    if (!((array.length == 1 && array[0] == "") || (array.length == 0))) {
+        ts = t.toLocaleLowerCase();
+        for (var i = 0; i < array.length; i++) {
+            let spl = array[i].split('*');
+            spl = removeEls("", spl);
+
+            var spl_mt = [];
+            for (let k = 0; k < spl.length; k++) {
+                var spl_m = [];
+                findIndexTotalInsens(ts, spl[k], spl_m);
+
+                spl_mt.push(spl_m);
+
+
+            }
+
+            found = true;
+
+            if ((spl_mt.length == 1) && (typeof spl_mt[0][0] === "undefined")) {
+                found = false;
+            } else if (!((spl_mt.length == 1) && (typeof spl_mt[0][0] !== "undefined"))) {
+
+                for (let m = 0; m < spl_mt.length - 1; m++) {
+
+                    if ((typeof spl_mt[m][0] === "undefined") || (typeof spl_mt[m + 1][0] === "undefined")) {
+                        found = false;
+                        m = spl_mt.length - 2; //EARLY TERMINATE
+                    } else if (!(spl_mt[m + 1][0] > spl_mt[m][0])) {
+                        found = false;
+                    }
+                }
+
+            }
+            blSite = (found) ? array[i] : blSite;
+            blSel = (found) ? slctrs[i] : blSel;
+            i = (found) ? array.length - 1 : i;
+        }
+    }
+    //console.log(found);
+    return [found,blSite,blSel];
+
+}
+
+var isCurrentSiteBlacklisted = function()
+{
+		return blacklistMatch(addrs, window.location.href);
+};
+
+function restore_options()
+{
+	if(typeof chrome.storage==='undefined'){
+		restore_options();
+	}else{
+	chrome.storage.sync.get(null, function(items)
+	{
+		if (Object.keys(items).length != 0)
+		{
+			//console.log(items);
+			
+
+		if(!!items.addrs_list && typeof  items.addrs_list!=='undefined'){
+			addrs=JSON.parse(items.addrs_list);
+		}		
+		
+		if(!!items.slc_list && typeof  items.slc_list!=='undefined'){
+			slctrs=JSON.parse(items.slc_list);
+		}
+
+		if(!!items.v_data && typeof  items.v_data!=='undefined'){
+			voice_data=items.v_data;
+		}	
+		
+		if(!!items.rate_v && typeof  items.rate_v!=='undefined'){
+			rte=parseFloat(items.rate_v);
+		}
+		
+		if(!!items.vol_v && typeof  items.vol_v!=='undefined'){
+			vol=parseFloat(items.vol_v);
+		}
+				
+		var isBl=isCurrentSiteBlacklisted();
+			if(isBl[0]){
+				selec=isBl[2];
+				sbl=false;
+				checker();
+			}
+		}
+		else
+		{
+			save_options();
+		}
+	});
+	}
+}
+
+function save_options()
+{
+		chrome.storage.sync.clear(function() {
+	chrome.storage.sync.set(
+	{
+		addrs_list: '[]',
+		slc_list: '[]',
+		v_data: '',
+		rate_v: "1.2",
+		vol_v: "0.5"
+	}, function()
+	{
+		console.log('Default options saved.');
+		restore_options();
+	});
+		});
+
+}
+
+
+const getVoices = () => {
+  voices = synth.getVoices();
+  checker();
+};
+
+if (synth.onvoiceschanged !== undefined) {
+  synth.onvoiceschanged = getVoices;
+}
+
+function pickText(el){
+	return (el.innerText===null || typeof el.innerText==='undefined' || (el.innerText==='' && el.value !=='') ? el.value : el.innerText );
+}
+
+function speak_tag(el,cancl){
+let line=pickText(el);
+if(cancl){
+	synth.cancel();
+}else if(line!=''){
+
+let vce;
+let vix=voices.findIndex(voice => {return voice.name === voice_data; }); if (vix>=0){
+	vce=voices[vix];
+};
+
+let speakText = new SpeechSynthesisUtterance(line);
+		
+	speakText.voice = vce;
+	    // Set pitch and rate
+    speakText.rate = rte;
+   speakText.pitch =1;
+    speakText.volume = vol;
+	/*speakText.onend = e => {};*/
+		synth.speak(speakText);
+}
+}
+
+function checker(){
+if(selec!=='' && !sbl  && voices.length>0){
+		
+		
+		
+	if (typeof observer === "undefined") {
+		const observer = new MutationObserver((mutations) => {
+			let fnd_el=null; 
+				
+			for(let i=0, len=mutations.length; i<len;i++){
+				let t=mutations[i];
+				if(isValid_tag(t.target, selec)){
+					fnd_el=t.target;
+					i=len-1;
+				}else{
+					let d=[...t.addedNodes];
+					let ix=d.findIndex((n)=>{return isValid_tag(n, selec); } ); if(ix>=0){
+						fnd_el=d[ix];
+						i=len-1;
+					}
+				}
+			}
+					
+				if(fnd_el!==null){
+					speak_tag(fnd_el,false);
+				}
+				
+		});
+
+			observer.observe(document, {
+				subtree: true,
+				childList: true,
+				attributes: true,
+				attributeOldValue: true,
+				characterData: true,
+				characterDataOldValue: true
+			});
+
+	}
+}
+}
+
+restore_options();
