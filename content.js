@@ -213,9 +213,7 @@ let speakText = new SpeechSynthesisUtterance(line);
 
 function checker(){
 if(selec!=='' && !sbl  && voices.length>0){
-		
-		
-		
+
 	if (typeof observer === "undefined") {
 		const observer = new MutationObserver((mutations) => {
 			let fnd_el=null; 
