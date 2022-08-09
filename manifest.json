@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TTS Updates",
   "options_page":  "options.html",
-  "version": "1.0",
+  "version": "2022.8",
   "content_scripts": [
     {
 	      "all_frames": true,
