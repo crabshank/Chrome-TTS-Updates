@@ -53,7 +53,7 @@ sct[0].oninput= function(event){
 }
 
 
-function speak_tag(el,cancl){
+function speak_tag_smpl(el,cancl){
 let line=pickText(el);
 if(cancl){
 	synth.cancel();
@@ -62,7 +62,9 @@ if(cancl){
 	let vce;
 	let vix=voices.findIndex(voice => {return voice.name === selectedVoice; }); if (vix>=0){
 		vce=voices[vix];
-	};
+	}else{
+		vce=voices[0];
+	}
 
 	let speakText = new SpeechSynthesisUtterance(line);
 			
@@ -77,7 +79,7 @@ if(cancl){
 }
 
 plyb.onclick=(event)=>{
-	speak_tag(tstl,false);
+	speak_tag_smpl(tstl,false);
 }
 
 const getVoices = () => {
@@ -150,8 +152,8 @@ var saver =function(){
 	let validate = true;	
 	for(let k=0, len=scts.length; k<len; k++){
 
-	let lstChk = scts[k].children[0].value;
-	let slct = scts[k].children[1].value;
+	let lstChk = scts[k].children[0].value.trim();
+	let slct = scts[k].children[1].value.trim();
 	if(lstChk!=='' && slct!==''){
 		if (lstChk.split('/').length != 1)
 		{
@@ -229,9 +231,9 @@ function restore_options()
 			setAddrCSS(unDef(items.slc_list,'[]'),false);
 			rterg.value = unDef(items.rate_v,"1.2");
 			volSd.value = unDef(items.vol_v,"0.5");
-
+			volLbl.innerText= 'Volume: '+volSd.valueAsNumber.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false});
 			getVoices();
-			if (synth.onvoiceschanged !== undefined) {
+			if (typeof synth.onvoiceschanged !== 'undefined') {
 				synth.onvoiceschanged = getVoices;
 			}
 			svbt.onclick = () => saver();

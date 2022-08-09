@@ -1,7 +1,6 @@
 var selec='';
 var voice_data='';
 var vol=0.5;
-//var selectedVoice=null; //slv.selectedOptions[0].getAttribute('data-name');
 var rte=1.2;
 const synth = window.speechSynthesis;
 var voices=[];
@@ -9,6 +8,8 @@ var voices=[];
 var addrs=[];
 var slctrs=[];
 var sbl=true;
+var line_q=[];
+var prg=false;
 
 function isValid_tag(tg,slc){
 	return ( ( typeof tg.matches!=='undefined' && tg.matches(slc) )?true:false);
@@ -93,9 +94,11 @@ function blacklistMatch(array, t) {
                 }
 
             }
-            blSite = (found) ? array[i] : blSite;
-            blSel = (found) ? slctrs[i] : blSel;
-            i = (found) ? array.length - 1 : i;
+            if(found){
+            		blSite = array[i];
+           		 blSel = slctrs[i];
+          		  i = array.length - 1;
+            }
         }
     }
     //console.log(found);
@@ -106,6 +109,11 @@ function blacklistMatch(array, t) {
 var isCurrentSiteBlacklisted = function()
 {
 		return blacklistMatch(addrs, window.location.href);
+};
+
+const getVoices = () => {
+  voices = synth.getVoices();
+  checker();
 };
 
 function restore_options()
@@ -144,6 +152,7 @@ function restore_options()
 			if(isBl[0]){
 				selec=isBl[2];
 				sbl=false;
+				getVoices();
 				checker();
 			}
 		}
@@ -174,13 +183,7 @@ function save_options()
 
 }
 
-
-const getVoices = () => {
-  voices = synth.getVoices();
-  checker();
-};
-
-if (synth.onvoiceschanged !== undefined) {
+if (typeof synth.onvoiceschanged !== 'undefined') {
   synth.onvoiceschanged = getVoices;
 }
 
@@ -189,15 +192,19 @@ function pickText(el){
 }
 
 function speak_tag(el,cancl){
+	return new Promise(function(resolve){ 
 let line=pickText(el);
 if(cancl){
 	synth.cancel();
+	resolve();
 }else if(line!=''){
 
 let vce;
 let vix=voices.findIndex(voice => {return voice.name === voice_data; }); if (vix>=0){
 	vce=voices[vix];
-};
+}else{
+	vce=voices[0];
+}
 
 let speakText = new SpeechSynthesisUtterance(line);
 		
@@ -206,9 +213,20 @@ let speakText = new SpeechSynthesisUtterance(line);
     speakText.rate = rte;
    speakText.pitch =1;
     speakText.volume = vol;
-	/*speakText.onend = e => {};*/
+	speakText.onend = (e) => {resolve();};
+	speakText.onerror = (e) => {resolve();};
 		synth.speak(speakText);
 }
+});
+}
+
+async function speak_tags(){
+	while(line_q.length>0){
+		prg=true;
+		await speak_tag(line_q[0],false);
+		line_q=line_q.slice(1);
+	}
+	prg=false;
 }
 
 function checker(){
@@ -216,24 +234,26 @@ if(selec!=='' && !sbl  && voices.length>0){
 
 	if (typeof observer === "undefined") {
 		const observer = new MutationObserver((mutations) => {
-			let fnd_el=null; 
+			let fnd_els=[]; 
 				
 			for(let i=0, len=mutations.length; i<len;i++){
 				let t=mutations[i];
 				if(isValid_tag(t.target, selec)){
-					fnd_el=t.target;
-					i=len-1;
-				}else{
+					fnd_els.push(t.target);
+				}
+				
 					let d=[...t.addedNodes];
 					let ix=d.findIndex((n)=>{return isValid_tag(n, selec); } ); if(ix>=0){
-						fnd_el=d[ix];
-						i=len-1;
+						fnd_els.push(d[ix]);
 					}
-				}
+				
 			}
 					
-				if(fnd_el!==null){
-					speak_tag(fnd_el,false);
+				if(fnd_els.length>0){
+					line_q.push(...fnd_els);
+					if(!prg){
+						speak_tags();
+					}
 				}
 				
 		});
