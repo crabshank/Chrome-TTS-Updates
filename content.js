@@ -12,6 +12,7 @@ var line_q=[];
 var prg=false;
 var lg_only=false;
 var lg_frms=false;
+var vtg_err=null;
 
 function pickText(el){
 	return (el.innerText===null || typeof el.innerText==='undefined' || (el.innerText==='' && el.value !=='') ? el.value : el.innerText );
@@ -19,7 +20,15 @@ function pickText(el){
 
 function isValid_tag(tg,slc){
 	let tx=pickText(tg);
-	return ( ( typeof tg.matches!=='undefined' && tg.matches(slc) && tx!==null && typeof tx!=='undefined' && tx!=='')?true:false);
+	try{
+		return ( ( typeof tg.matches!=='undefined' && tg.matches(slc) && tx!==null && typeof tx!=='undefined' && tx!=='')?true:false);
+	}catch(e){
+		if(vtg_err===null || e.message!==vtg_err){
+			vtg_err=e.message;
+			console.error(e);
+		}
+		return false;
+	}
 }
 
 function removeEls(d, array) {
