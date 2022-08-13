@@ -13,6 +13,8 @@ var prg=false;
 var lg_only=false;
 var lg_frms=false;
 var vtg_err=null;
+var last_read=null;
+var last_disp=null;
 
 function pickText(el){
 	return (el.innerText===null || typeof el.innerText==='undefined' || (el.innerText==='' && el.value !=='') ? el.value : el.innerText );
@@ -248,7 +250,10 @@ let speakText = new SpeechSynthesisUtterance(line);
 async function speak_tags(){
 	while(line_q.length>0){
 		prg=true;
-		await speak_tag(line_q[0],false);
+		if(last_read===null || line_q[0]!==last_read){
+			await speak_tag(line_q[0],false);
+			last_read=line_q[0];
+		}
 		line_q=line_q.slice(1);
 	}
 	prg=false;
@@ -275,13 +280,22 @@ if(selec!=='' && !sbl  && voices.length>0){
 			}
 					
 				if(fnd_els.length>0){
-					if(lg_only){
-						console.group('TTS Updates -"'+selec+'":');
+					if(lg_only){					
 						let disps=fnd_els.map((f)=>{return {el: f, text: pickText(f), frame_URL: window.location.href};});
+						let cnt=0;
 						for(let k=0, len=fnd_els.length;k<len;k++ ){
-							console.log(disps[k]);
+							if(last_disp===null || disps[k].text!==last_disp){
+								if(cnt===0){
+									console.group('TTS Updates -"'+selec+'":');
+								}
+								console.log(disps[k]);
+								last_disp=disps[k].text;
+								cnt++;
+							}
 						}
-						console.groupEnd();
+						if(cnt>0){
+							console.groupEnd();
+						}
 					}else{
 						line_q.push(...fnd_els);
 						if(!prg){
