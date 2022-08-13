@@ -10,13 +10,25 @@
 label{
     vertical-align: top;
 }
+select {
+	background: buttonface;
+    margin-bottom: 2px;
+    vertical-align: bottom;
+}
+select option {
+	color: black;
+}
 </style>
 </head>
 <body>
 
 <select id="voice-select" style="background-color: buttonface;" title="TTS voices"></select><br><br>
-	<label for="log_only">Log, but don't speak the text of, new matching tags (useful for finding selectors):</label>
-<input type="checkbox" id="log_only"></input><br>
+	<label for="log_only">Logging settings (useful for finding selectors):</label>
+<select id="log_only">
+  <option>No logging</option>
+  <option>Log and speak matching tags</option>
+  <option>Log, but don't speak the text of, new matching tags</option>
+</select><br>
 	<label for="log_frm_urls">Log URLs of all frames (useful for finding correct URL for embedded content):</label>
 <input type="checkbox" id="log_frm_urls"></input><br>
 <label for="rter" style="margin-left: 50%;" id="rteLb">Rate:</label>

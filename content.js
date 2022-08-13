@@ -10,7 +10,7 @@ var slctrs=[];
 var sbl=true;
 var line_q=[];
 var prg=false;
-var lg_only=false;
+var lg_only=0;
 var lg_frms=false;
 var vtg_err=null;
 var last_read=null;
@@ -167,7 +167,7 @@ function restore_options()
 		}
 		
 		if(items.log_only_v!==null && typeof  items.log_only_v!=='undefined'){
-			lg_only=items.log_only_v;
+			lg_only=parseInt(items.log_only_v);
 		}
 		
 		if(items.log_frms_v!==null && typeof  items.log_frms_v!=='undefined'){
@@ -280,7 +280,7 @@ if(selec!=='' && !sbl  && voices.length>0){
 			}
 					
 				if(fnd_els.length>0){
-					if(lg_only){					
+					if(lg_only>0){
 						let disps=fnd_els.map((f)=>{return {el: f, text: pickText(f), frame_URL: window.location.href};});
 						let cnt=0;
 						for(let k=0, len=fnd_els.length;k<len;k++ ){
@@ -296,7 +296,9 @@ if(selec!=='' && !sbl  && voices.length>0){
 						if(cnt>0){
 							console.groupEnd();
 						}
-					}else{
+					}
+					
+					if(lg_only<2){
 						line_q.push(...fnd_els);
 						if(!prg){
 							speak_tags();
