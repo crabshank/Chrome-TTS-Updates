@@ -10,9 +10,16 @@ var slctrs=[];
 var sbl=true;
 var line_q=[];
 var prg=false;
+var lg_only=false;
+var lg_frms=false;
+
+function pickText(el){
+	return (el.innerText===null || typeof el.innerText==='undefined' || (el.innerText==='' && el.value !=='') ? el.value : el.innerText );
+}
 
 function isValid_tag(tg,slc){
-	return ( ( typeof tg.matches!=='undefined' && tg.matches(slc) )?true:false);
+	let tx=pickText(tg);
+	return ( ( typeof tg.matches!=='undefined' && tg.matches(slc) && tx!==null && typeof tx!=='undefined' && tx!=='')?true:false);
 }
 
 function removeEls(d, array) {
@@ -147,8 +154,19 @@ function restore_options()
 		if(!!items.vol_v && typeof  items.vol_v!=='undefined'){
 			vol=parseFloat(items.vol_v);
 		}
+		
+		if(items.log_only_v!==null && typeof  items.log_only_v!=='undefined'){
+			lg_only=items.log_only_v;
+		}
+		
+		if(items.log_frms_v!==null && typeof  items.log_frms_v!=='undefined'){
+			lg_frms=items.log_frms_v;
+		}
 				
 		var isBl=isCurrentSiteBlacklisted();
+		if(lg_frms){
+			console.log('TTS Updates - Frame URL: '+window.location.href);
+		}
 			if(isBl[0]){
 				selec=isBl[2];
 				sbl=false;
@@ -173,7 +191,9 @@ function save_options()
 		slc_list: '[]',
 		v_data: '',
 		rate_v: "1.2",
-		vol_v: "0.5"
+		vol_v: "0.5",
+		log_only_v: false,
+		log_frms_v: false
 	}, function()
 	{
 		console.log('Default options saved.');
@@ -185,10 +205,6 @@ function save_options()
 
 if (typeof synth.onvoiceschanged !== 'undefined') {
   synth.onvoiceschanged = getVoices;
-}
-
-function pickText(el){
-	return (el.innerText===null || typeof el.innerText==='undefined' || (el.innerText==='' && el.value !=='') ? el.value : el.innerText );
 }
 
 function speak_tag(el,cancl){
@@ -250,9 +266,18 @@ if(selec!=='' && !sbl  && voices.length>0){
 			}
 					
 				if(fnd_els.length>0){
-					line_q.push(...fnd_els);
-					if(!prg){
-						speak_tags();
+					if(lg_only){
+						console.group('TTS Updates -"'+selec+'":');
+						let disps=fnd_els.map((f)=>{return {el: f, text: pickText(f), frame_URL: window.location.href};});
+						for(let k=0, len=fnd_els.length;k<len;k++ ){
+							console.log(disps[k]);
+						}
+						console.groupEnd();
+					}else{
+						line_q.push(...fnd_els);
+						if(!prg){
+							speak_tags();
+						}
 					}
 				}
 				

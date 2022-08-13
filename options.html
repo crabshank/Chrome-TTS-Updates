@@ -1,11 +1,24 @@
 <html>
 <head>
 <style>
+	input[type="checkbox"] {
+	background: buttonface;
+    margin-bottom: 2px;
+    margin-left: 3px;
+    vertical-align: bottom;
+}
+label{
+    vertical-align: top;
+}
 </style>
 </head>
 <body>
 
-<select id="voice-select" style="background-color: buttonface;" title="TTS voices"></select><br>
+<select id="voice-select" style="background-color: buttonface;" title="TTS voices"></select><br><br>
+	<label for="log_only">Log, but don't speak the text of, new matching tags (useful for finding selectors):</label>
+<input type="checkbox" id="log_only"></input><br>
+	<label for="log_frm_urls">Log URLs of all frames (useful for finding correct URL for embedded content):</label>
+<input type="checkbox" id="log_frm_urls"></input><br>
 <label for="rter" style="margin-left: 50%;" id="rteLb">Rate:</label>
 <input type="number" min="0.1" max="10" step="0.01" value="1.2" id="rter"><br>
 <label for="vol" style="margin-left: 50%;" id="volL">Volume: 0.5</label>

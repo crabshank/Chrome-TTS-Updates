@@ -7,6 +7,8 @@ var volSd = document.getElementById('vol');
 var tstl=document.getElementById("tst");
 var plyb=document.getElementById("ply");
 var svbt=document.getElementById("save");
+var lg_only=document.getElementById("log_only");
+var lg_frms=document.getElementById("log_frm_urls");
 var voice_data='';
 var voices=[];
 
@@ -104,7 +106,7 @@ function removeEls(d, array){
 	var newArray = [];
 	for (let i = 0; i < array.length; i++)
 	{
-		if (array[i] != d)
+		if (array[i] !== d)
 		{
 			newArray.push(array[i]);
 		}
@@ -200,6 +202,8 @@ var saver =function(){
 			v_data: slv.selectedOptions[0].getAttribute('data-name'),
 			rate_v: rterg.value,
 			vol_v: volSd.value,
+			log_only_v: lg_only.checked,
+			log_frms_v: lg_frms.checked
 		}, function()
 		{
 			let status = document.getElementById('stats');
@@ -231,6 +235,8 @@ function restore_options()
 			setAddrCSS(unDef(items.slc_list,'[]'),false);
 			rterg.value = unDef(items.rate_v,"1.2");
 			volSd.value = unDef(items.vol_v,"0.5");
+			lg_only.checked=unDef(items.log_only_v,false);
+			lg_frms.checked=unDef(items.log_frms_v,false);
 			volLbl.innerText= 'Volume: '+volSd.valueAsNumber.toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false});
 			getVoices();
 			if (typeof synth.onvoiceschanged !== 'undefined') {
@@ -255,7 +261,9 @@ function save_options()
 		slc_list: '[]',
 		v_data: '',
 		rate_v: "1.2",
-		vol_v: "0.5"
+		vol_v: "0.5",
+		log_only_v: false,
+		log_frms_v: false
 	}, function(){
 		restore_options();
 	});
