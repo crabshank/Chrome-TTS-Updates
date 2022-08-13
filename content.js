@@ -203,7 +203,7 @@ function save_options()
 		v_data: '',
 		rate_v: "1.2",
 		vol_v: "0.5",
-		log_only_v: false,
+		log_only_v: 0,
 		log_frms_v: false
 	}, function()
 	{
