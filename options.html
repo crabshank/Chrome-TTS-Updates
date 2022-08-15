@@ -1,49 +1,66 @@
 <html>
 <head>
 <style>
-	input[type="checkbox"] {
-	background: buttonface;
-    margin-bottom: 2px;
-    margin-left: 3px;
-    vertical-align: bottom;
-}
-label{
-    vertical-align: top;
-}
 select {
 	background: buttonface;
     margin-bottom: 2px;
     vertical-align: bottom;
 }
+input[type="checkbox"] {
+	background: buttonface;
+    margin-bottom: 2px;
+    margin-left: 3px;
+    vertical-align: bottom;
+}
 select option {
 	color: black;
+}
+label{
+    vertical-align: top;
+}
+button#save {
+	width: 116px;
+	color: #000000;
+	font-size: 19px;
+	background: buttonface;
+	padding: 5px 10px 5px 10px;
+}
+textarea#blacklist {
+    border: #00000069;
+    border-style: outset;
+    border-width: 1px;
+	width: -webkit-fill-available;
+	min-height: 3.1ch;
 }
 </style>
 </head>
 <body>
 
-<select id="voice-select" style="background-color: buttonface;" title="TTS voices"></select><br><br>
-	<label for="log_only">Logging settings (useful for finding selectors):</label>
-<select id="log_only">
-  <option>No logging</option>
-  <option>Log and speak matching tags</option>
-  <option>Log, but don't speak the text of, new matching tags</option>
+Default maximum speed: <input type="number" id="mxsp" min="1" max="16" step="0.01" value="2.2" style="width: 9ch;"></input><br>
+Default step: <input type="number" id="mxst" min="0.01" max="15" step="0.01" value="0.1" style="width: 9ch;"></input><br>
+<label for="vsb">Visibility:</label>
+<select id="vsb">
+  <option>Auto-disappearing</option>
+  <option>Always visible</option>
+  <option>Always visible when not fullscreen, auto-disappears when fullscreen</option>
 </select><br>
-	<label for="log_frm_urls">Log URLs of all frames (useful for finding correct URL for embedded content):</label>
-<input type="checkbox" id="log_frm_urls"></input><br>
-<label for="rter" style="margin-left: 50%;" id="rteLb">Rate:</label>
-<input type="number" min="0.1" max="10" step="0.01" value="1.2" id="rter"><br>
-<label for="vol" style="margin-left: 50%;" id="volL">Volume: 0.5</label>
-<input type="range" min="0.1" max="1" step="0.01" value="0.5" id="vol"><br><br>
-<label for="tst" style="" id="tstLbl">Test sentence: </label>
-<textarea id="tst" style="box-shadow: 0 0 0px 1px black;border-width: 0px; width:50%;vertical-align: top;">This is a test line.</textarea>
-<button id="ply">Say test line</button><br><br>
-
-<section class="site_sets" style="display: list-item !important;">
-<textarea placeholder="URL (Use asterisks with slashes)" style="box-shadow: 0 0 0px 1px black; border-width: 0px; width:48%;"></textarea>
-<textarea placeholder="CSS selector (Do not use any quotation marks)" style="box-shadow: 0 0 0px 1px black; border-width: 0px; width:48%;"></textarea><br><br>
-</section>
-
+Seconds to seek (buttons): <input type="number" id="ska" min="0" step="1" value="10" style="width: 9ch;"></input><br>
+% to seek (buttons): <input type="number" id="skp" min="0" step="1" value="4" style="width: 9ch;"></input><br>
+<label for="sorp">Seeking preference:</label>
+<select id="sorp">
+  <option>Prefer seconds</option>
+  <option>Prefer %</option>
+</select><br>
+<label for="sk_buff">Display buttons to skip to the next buffered range:</label>
+<input type="checkbox" id="sk_buff"></input><br>
+<label for="cclk">Progress bar seek click setting:</label>
+<select id="cclk">
+  <option>Click</option>
+  <option>Double click</option>
+  <option>Disabled</option>
+</select><br><br>
+<span>Blacklisted Sites (enter domain names separated by commas; use asterisks with slashes):</span><br>
+<textarea id="blacklist"></textarea><br>
 <div id="stats"></div>
 <button id="save">Save</button>
 <script src="options.js"></script>
