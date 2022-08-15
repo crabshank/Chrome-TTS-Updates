@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Fast forward",
+  "name": "TTS Updates",
   "options_page":  "options.html",
-  "version": "3.42.1",
+  "version": "2022.8",
   "content_scripts": [
     {
 	      "all_frames": true,
@@ -12,10 +12,10 @@
       "js": ["content.js"]
     }
   ],
-  "permissions": ["tabs","activeTab","storage"],
+  "permissions": ["storage"],
   "action": {
     "default_icon": "icon.png",
-    "default_title": "Fast forward"
+    "default_title": "TTS Updates"
   },
   	"icons": {
         "128": "icon.png"
