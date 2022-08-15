@@ -24,7 +24,7 @@ function create_sct(){
 		let sc=document.createElement('section');
 		sc.style.cssText='display: inline !important;';
 		sc.className='site_sets';
-		sc.innerHTML='<textarea placeholder="URL (Use asterisks with slashes)" style="box-shadow: 0 0 0px 1px black; border-width: 0px; width:48%;"></textarea><textarea placeholder="CSS selector (Do not use any quotation marks)" style="box-shadow: 0 0 0px 1px black; border-width: 0px; width:48%;"></textarea><br><br>';
+		sc.innerHTML='<textarea placeholder="URL (Use asterisks with slashes)" style="box-shadow: 0 0 0px 1px black; border-width: 0px; width:48%;"></textarea><textarea placeholder="CSS selector (Do not use any quotation marks)" style="box-shadow: black 0px 0px 0px 1px;border-width: 0px;width: 48%;margin-left: 0.16%;"></textarea><br><br>';
 		return sc;
 }
 
