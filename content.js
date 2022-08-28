@@ -1,4 +1,5 @@
 var selec='';
+var fcn=``;
 var voice_data='';
 var vol=0.5;
 var rte=1.2;
@@ -7,29 +8,38 @@ var voices=[];
 //var ptch=1;
 var addrs=[];
 var slctrs=[];
-var sbl=true;
+var fcns=[];
 var line_q=[];
+var sbl=true;
 var prg=false;
 var lg_only=0;
 var lg_frms=false;
 var vtg_err=null;
-var last_read=null;
 var last_disp=null;
+var last_read=null;
 
 function pickText(el){
 	return (el.innerText===null || typeof el.innerText==='undefined' || (el.innerText==='' && el.value !=='') ? el.value : el.innerText );
 }
 
 function isValid_tag(tg,slc){
-	let tx=pickText(tg);
 	try{
-		return ( ( typeof tg.matches!=='undefined' && tg.matches(slc) && tx!==null && typeof tx!=='undefined' && tx!=='')?true:false);
+		if( typeof tg !=='undefined' && typeof tg.matches!=='undefined' && tg.matches(slc) ){
+				let tx=pickText(tg);
+				if(tx!==null && typeof tx!=='undefined' && tx!==''){
+					return [tx,true];
+				}else{
+					return [tx,false];
+				}
+		}else{
+			return [null,false];
+		}
 	}catch(e){
 		if(vtg_err===null || e.message!==vtg_err){
 			vtg_err=e.message;
 			console.error(e);
 		}
-		return false;
+		return [null,false];
 	}
 }
 
@@ -79,6 +89,7 @@ function blacklistMatch(array, t) {
     var found = false;
 	var blSite='';
 	var blSel='';
+	var blFcn=``;
     if (!((array.length == 1 && array[0] == "") || (array.length == 0))) {
         ts = t.toLocaleLowerCase();
         for (var i = 0; i < array.length; i++) {
@@ -115,12 +126,13 @@ function blacklistMatch(array, t) {
             if(found){
             		blSite = array[i];
            		 blSel = slctrs[i];
+           		 blFcn = fcns[i];
           		  i = array.length - 1;
             }
         }
     }
     //console.log(found);
-    return [found,blSite,blSel];
+    return [found,blSite,blSel,blFcn];
 
 }
 
@@ -154,6 +166,10 @@ function restore_options()
 			slctrs=JSON.parse(items.slc_list);
 		}
 
+		if(!!items.fcn_list && typeof  items.fcn_list!=='undefined'){
+			fcns=JSON.parse(items.fcn_list);
+		}
+
 		if(!!items.v_data && typeof  items.v_data!=='undefined'){
 			voice_data=items.v_data;
 		}	
@@ -179,6 +195,10 @@ function restore_options()
 			console.log('TTS Updates - Frame URL: '+window.location.href);
 		}
 			if(isBl[0]){
+				fcn=(typeof isBl[3]!=='undefined')?isBl[3]:``;
+				if(fcn!==``){
+					setTimeout('let procText=(el,ln)=>{'+fcn+'};',0);
+				}
 				selec=isBl[2];
 				sbl=false;
 				getVoices();
@@ -200,6 +220,7 @@ function save_options()
 	{
 		addrs_list: '[]',
 		slc_list: '[]',
+		fcn_list: '[]',
 		v_data: '',
 		rate_v: "1.2",
 		vol_v: "0.5",
@@ -218,9 +239,9 @@ if (typeof synth.onvoiceschanged !== 'undefined') {
   synth.onvoiceschanged = getVoices;
 }
 
-function speak_tag(el,cancl){
+function speak_line( txt,cancl){
 	return new Promise(function(resolve){ 
-let line=pickText(el);
+let line=txt;
 if(cancl){
 	synth.cancel();
 	resolve();
@@ -247,11 +268,11 @@ let speakText = new SpeechSynthesisUtterance(line);
 });
 }
 
-async function speak_tags(){
+async function speak_lines(){
 	while(line_q.length>0){
 		prg=true;
 		if(last_read===null || line_q[0]!==last_read){
-			await speak_tag(line_q[0],false);
+			await speak_line(line_q[0],false);
 			last_read=line_q[0];
 		}
 		line_q=line_q.slice(1);
@@ -259,37 +280,70 @@ async function speak_tags(){
 	prg=false;
 }
 
+
 function checker(){
 if(selec!=='' && !sbl  && voices.length>0){
 
 	if (typeof observer === "undefined") {
 		const observer = new MutationObserver((mutations) => {
 			let fnd_els=[]; 
-				
+			let g=[];
 			for(let i=0, len=mutations.length; i<len;i++){
 				let t=mutations[i];
-				if(isValid_tag(t.target, selec)){
-					fnd_els.push(t.target);
+				g=isValid_tag(t.target, selec);
+				if(g[1]){
+					fnd_els.push([t.target, g[0]]);
 				}
 				
 					let d=[...t.addedNodes];
-					let ix=d.findIndex((n)=>{return isValid_tag(n, selec); } ); if(ix>=0){
-						fnd_els.push(d[ix]);
+					if(d.length>0){
+						for(let k=0, len_k=d.length; k<len; k++){
+							g=isValid_tag(d[k], selec);
+							if(g[1]){
+								fnd_els.push([d[k], g[0]]);
+							}
+						}
 					}
-				
 			}
 					
 				if(fnd_els.length>0){
+					for(let i=0, len=fnd_els.length; i<len;i++){
+							let m=fnd_els[i];
+							if (fcn!==``){
+								let pt=procText(m[0], m[1]);
+								if(typeof pt!=='undefined'){
+									m.push(pt); //Add output text m[2]
+								}else{
+									m.push(null); //Add output text m[2]
+								}					
+							}else{
+								m.push(null); //Add output text m[2]
+							}
+							
+							if(m[2]!==null){
+								m.push(true); //m[3]
+							}else{
+								m.push(false); //m[3]
+							}
+					}
+
 					if(lg_only>0){
-						let disps=fnd_els.map((f)=>{return {el: f, text: pickText(f), frame_URL: window.location.href};});
+						let disps=fnd_els.map((f)=>{
+							if(f[3]){
+								return {el: f[0], out_text: f[2], raw_text: f[1], frame_URL: window.location.href};
+							}else{
+								return {el: f[0], out_text: f[1], frame_URL: window.location.href};
+							}	
+						});
+						
 						let cnt=0;
 						for(let k=0, len=fnd_els.length;k<len;k++ ){
-							if(last_disp===null || disps[k].text!==last_disp){
+							if(last_disp===null || disps[k].out_text!==last_disp){
 								if(cnt===0){
 									console.group('TTS Updates -"'+selec+'":');
 								}
 								console.log(disps[k]);
-								last_disp=disps[k].text;
+								last_disp=disps[k].out_text;
 								cnt++;
 							}
 						}
@@ -299,9 +353,16 @@ if(selec!=='' && !sbl  && voices.length>0){
 					}
 					
 					if(lg_only<2){
-						line_q.push(...fnd_els);
+						let fnd_els_text=fnd_els.map((f)=>{
+							if(f[3]){
+								return f[2];
+							}else{
+								return f[1];
+							}
+						});
+						line_q.push(...fnd_els_text);
 						if(!prg){
-							speak_tags();
+							speak_lines();
 						}
 					}
 				}

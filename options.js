@@ -13,6 +13,43 @@ var sts=document.getElementById("stats");
 var voice_data='';
 var voices=[];
 
+function escaper(s){
+s=s.split('\\').join('\\u005C');
+let terms=['`','${'];
+let outs=[];
+for(let k=0, len=terms.length; k<len; k++){
+	var ix=s.indexOf(terms[k]);
+	var i = [];
+	if(ix>=0){
+		i.push([ix,ix+terms[k].length-1]);
+		let end=false;
+		while(!end){
+			ix=s.indexOf(terms[k], (i[i.length-1][0] + 1));
+			if(ix>=0){
+				i.push([ix,ix+terms[k].length-1]);
+			}else{
+				end=true;
+			}
+		}
+	}
+	outs.push(i);
+}
+	let outs_f=[];
+	let ss=[...s];
+	for(let k=0, len0=outs.length; k<len0; k++){
+		for(let j=0, len1=outs[k].length; j<len1; j++){
+			let x=outs[k][j][0];
+			if(x==0 || !ss[x-1].endsWith('\\')){
+				outs_f.push(x);
+			}
+		}
+	}
+	for(let k=0, len=outs_f.length; k<len; k++){
+		ss[outs_f[k]]='\\'+ss[outs_f[k]];
+	}
+	return ss.join('');
+}
+
 function setHeights(sc){
 			[...sc.children].forEach((k)=>{
 				k.style.height='min-content';
@@ -24,7 +61,7 @@ function create_sct(){
 		let sc=document.createElement('section');
 		sc.style.cssText='display: inline !important;';
 		sc.className='site_sets';
-		sc.innerHTML='<textarea placeholder="URL (Use asterisks with slashes)" style="box-shadow: 0 0 0px 1px black; border-width: 0px; width:48%;"></textarea><textarea placeholder="CSS selector (Do not use any quotation marks)" style="box-shadow: black 0px 0px 0px 1px;border-width: 0px;width: 48%;margin-left: 0.16%;"></textarea><br><br>';
+		sc.innerHTML='<textarea placeholder="URL (Use asterisks with slashes)" style="box-shadow: 0 0 0px 1px black; border-width: 0px; width:32.5%;"></textarea><textarea placeholder="CSS selector (Do not use any quotation marks)" style="box-shadow: black 0px 0px 0px 1px;border-width: 0px;width: 32.5%;margin-left: 0.16%;"></textarea><textarea placeholder="(el, ln)=>{ // ln=pickText(el); ONLY WRITE FUNCTION BODY IN THIS TEXT BOX!\n\tlet new_line=…;\n\t⋮\n\treturn new_line;\n}" style="box-shadow: black 0px 0px 0px 1px;border-width: 0px;width: 32.5%;margin-left: 0.16%;"></textarea><br><br>';
 		return sc;
 }
 
@@ -62,11 +99,12 @@ function forceNewSct(sci){
 let chk=function(sci,init){
 	let u=sci.children[0];
 	let f=sci.children[1];
+	let f2=sci.children[2];
 let sct2=[...document.querySelectorAll('SECTION.site_sets')];
 	if (((u.value!="" && f.value!="")&&(sct2.length==1))||((u.value!="" && f.value!="")&&(init!=1)&&(sct2.length>1))){
 		forceNewSct(sci);
-	}else if((u.value=="" && f.value=="")&&(sct2.length>1)&&(init!=2)){
-	sci.remove();
+	}else if((u.value=="" && f.value==""&& f2.value=="")&&(sct2.length>1)&&(init!=2)){
+		sci.remove();
 	}
 }
 
@@ -173,11 +211,13 @@ var saver =function(){
 		let scts=[...document.querySelectorAll('SECTION.site_sets')];
 		let addrs=[];
 		let slcs=[];
+		let fcns=[];
 	let validate = true;	
 	for(let k=0, len=scts.length; k<len; k++){
 
 	let lstChk = scts[k].children[0].value.trim();
 	let slct = scts[k].children[1].value.trim();
+	let fcn = scts[k].children[2].value.trim();
 	
 	if(lstChk!=='' && slct!==''){
 		if (lstChk.split('/').length != 1)
@@ -209,6 +249,7 @@ var saver =function(){
 		if (validate){
 			addrs.push(lstChk);
 			slcs.push(slct);
+			fcns.push(escaper(fcn));
 		}
 	}
 
@@ -222,6 +263,7 @@ var saver =function(){
 		{
 			addrs_list: JSON.stringify(addrs),
 			slc_list: JSON.stringify(slcs),
+			fcn_list: JSON.stringify(fcns),
 			v_data: slv.selectedOptions[0].getAttribute('data-name'),
 			rate_v: rterg.value,
 			vol_v: volSd.value,
@@ -229,11 +271,10 @@ var saver =function(){
 			log_frms_v: lg_frms.checked
 		}, function()
 		{
-			let status = document.getElementById('stats');
-			status.innerText = 'Options saved.';
+			sts.innerText = 'Options saved.';
 			setTimeout(function()
 			{
-				status.innerText = '';
+				sts.innerText = '';
 			}, 1250);
 		});
 			});
@@ -256,6 +297,7 @@ function restore_options()
 			voice_data=unDef(items.v_data,'');
 			setAddrCSS(unDef(items.addrs_list,'[]'),0);
 			setAddrCSS(unDef(items.slc_list,'[]'),1);
+			setAddrCSS(unDef(items.fcn_list,'[]'),2);
 			rterg.value = unDef(items.rate_v,"1.2");
 			volSd.value = unDef(items.vol_v,"0.5");
 			lg_only.selectedIndex=unDef(items.log_only_v,0);
@@ -282,6 +324,7 @@ function save_options()
 	{
 		addrs_list: '[]',
 		slc_list: '[]',
+		fcn_list: '[]',
 		v_data: '',
 		rate_v: "1.2",
 		vol_v: "0.5",
