@@ -340,7 +340,7 @@ if(selec!=='' && !sbl  && voices.length>0){
 						for(let k=0, len=fnd_els.length;k<len;k++ ){
 							if(last_disp===null || disps[k].out_text!==last_disp){
 								if(cnt===0){
-									console.group('TTS Updates -"'+selec+'":');
+									console.group('TTS Updates - "'+selec+'":');
 								}
 								console.log(disps[k]);
 								last_disp=disps[k].out_text;
