@@ -14,7 +14,7 @@ var voice_data='';
 var voices=[];
 
 function escaper(s){
-s=s.split('\\').join('\\u005C');
+//s=s.split('\\').join('\\u005C');
 let terms=['`','${'];
 let outs=[];
 for(let k=0, len=terms.length; k<len; k++){
