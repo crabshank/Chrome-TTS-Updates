@@ -13,43 +13,6 @@ var sts=document.getElementById("stats");
 var voice_data='';
 var voices=[];
 
-function escaper(s){
-//s=s.split('\\').join('\\u005C');
-let terms=['`','${'];
-let outs=[];
-for(let k=0, len=terms.length; k<len; k++){
-	var ix=s.indexOf(terms[k]);
-	var i = [];
-	if(ix>=0){
-		i.push([ix,ix+terms[k].length-1]);
-		let end=false;
-		while(!end){
-			ix=s.indexOf(terms[k], (i[i.length-1][0] + 1));
-			if(ix>=0){
-				i.push([ix,ix+terms[k].length-1]);
-			}else{
-				end=true;
-			}
-		}
-	}
-	outs.push(i);
-}
-	let outs_f=[];
-	let ss=[...s];
-	for(let k=0, len0=outs.length; k<len0; k++){
-		for(let j=0, len1=outs[k].length; j<len1; j++){
-			let x=outs[k][j][0];
-			if(x==0 || !ss[x-1].endsWith('\\')){
-				outs_f.push(x);
-			}
-		}
-	}
-	for(let k=0, len=outs_f.length; k<len; k++){
-		ss[outs_f[k]]='\\'+ss[outs_f[k]];
-	}
-	return ss.join('');
-}
-
 function setHeights(sc){
 			[...sc.children].forEach((k)=>{
 				k.style.height='min-content';
@@ -249,7 +212,7 @@ var saver =function(){
 		if (validate){
 			addrs.push(lstChk);
 			slcs.push(slct);
-			fcns.push(escaper(fcn));
+			fcns.push(fcn);
 		}
 	}
 
