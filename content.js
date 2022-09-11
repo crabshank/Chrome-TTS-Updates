@@ -15,8 +15,6 @@ var prg=false;
 var lg_only=0;
 var lg_frms=false;
 var vtg_err=null;
-var last_disp=null;
-var last_read=null;
 
 function pickText(el){
 	return (el.innerText===null || typeof el.innerText==='undefined' || (el.innerText==='' && el.value !=='') ? el.value : el.innerText );
@@ -271,10 +269,7 @@ let speakText = new SpeechSynthesisUtterance(line);
 async function speak_lines(){
 	while(line_q.length>0){
 		prg=true;
-		if(last_read===null || line_q[0]!==last_read){
-			await speak_line(line_q[0],false);
-			last_read=line_q[0];
-		}
+		await speak_line(line_q[0],false);
 		line_q=line_q.slice(1);
 	}
 	prg=false;
@@ -326,6 +321,14 @@ if(selec!=='' && !sbl  && voices.length>0){
 								m.push(false); //m[3]
 							}
 					}
+					
+					fnd_els=fnd_els.filter((f)=>{
+										if(f[3]){
+											return f[2].trim()!=='';
+										}else{
+											return f[1].trim()!=='';
+										}
+									});
 
 					if(lg_only>0){
 						let disps=fnd_els.map((f)=>{
@@ -338,14 +341,11 @@ if(selec!=='' && !sbl  && voices.length>0){
 						
 						let cnt=0;
 						for(let k=0, len=fnd_els.length;k<len;k++ ){
-							if(last_disp===null || disps[k].out_text!==last_disp){
 								if(cnt===0){
 									console.group('TTS Updates - "'+selec+'":');
 								}
 								console.log(disps[k]);
-								last_disp=disps[k].out_text;
 								cnt++;
-							}
 						}
 						if(cnt>0){
 							console.groupEnd();
