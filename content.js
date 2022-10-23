@@ -41,34 +41,8 @@ function isValid_tag(tg,slc){
 	}
 }
 
-function removeEls(d, array) {
-    return array.filter((a)=>{return a!=d});
-}
-
-function getSelectorAllShadow(docm, slc){
-var shrc=[docm];
-var shrc_l=1;
-
-let srCnt=0;
-
-while(srCnt<shrc_l){
-	allNodes=[shrc[srCnt],...shrc[srCnt].querySelectorAll('*')];
-	for(let i=0, len=allNodes.length; i<len; i++){
-		if(!!allNodes[i] && typeof allNodes[i] !=='undefined' && typeof allNodes[i].matches!=='undefined' && allNodes[i].matches(slc) && i>0){
-			shrc.push(allNodes[i]);
-		}
-
-		if(!!allNodes[i].shadowRoot && typeof allNodes[i].shadowRoot !=='undefined'){
-			let c=allNodes[i].shadowRoot.children;
-			shrc.push(...c);
-		}
-	}
-	srCnt++;
-	shrc_l=shrc.length;
-}
-
-	let out=shrc.filter((c)=>{return ( typeof c.matches!=='undefined' && c.matches(slc) ) ;});
-	return out;
+function removeEls(d, arr) {
+    return arr.filter((a)=>{return a!==d});
 }
 
 function findIndexTotalInsens(string, substring, index) {
