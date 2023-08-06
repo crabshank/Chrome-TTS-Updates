@@ -221,8 +221,8 @@ var saver =function(){
 	{
 		
 
-			chrome.storage.sync.clear(function() {
-		chrome.storage.sync.set(
+			chrome.storage.local.clear(function() {
+		chrome.storage.local.set(
 		{
 			addrs_list: JSON.stringify(addrs),
 			slc_list: JSON.stringify(slcs),
@@ -252,7 +252,7 @@ function restore_options()
 	if(typeof chrome.storage==='undefined'){
 		restore_options();
 	}else{
-	chrome.storage.sync.get(null, function(items)
+	chrome.storage.local.get(null, function(items)
 	{
 		if (Object.keys(items).length != 0)
 		{
@@ -282,8 +282,8 @@ function restore_options()
 
 function save_options()
 {
-		chrome.storage.sync.clear(function() {
-	chrome.storage.sync.set(
+		chrome.storage.local.clear(function() {
+	chrome.storage.local.set(
 	{
 		addrs_list: '[]',
 		slc_list: '[]',
