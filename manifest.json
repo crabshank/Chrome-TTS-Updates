@@ -1,23 +1,28 @@
 {
   "manifest_version": 3,
   "name": "TTS Updates",
-  "options_page":  "options.html",
-  "version": "2023.8",
-  "content_scripts": [
-    {
-	      "all_frames": true,
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": ["content.js"]
-    }
+  "version": "2026.11",
+  "minimum_chrome_version": "135",
+  "permissions": [
+    "storage",
+	"unlimitedStorage",
+    "userScripts",
+	"offscreen"
   ],
-  "permissions": ["storage","unlimitedStorage"],
-  "action": {
-    "default_icon": "icon.png",
-    "default_title": "TTS Updates"
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
   },
-  	"icons": {
+   "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "run_at": "document_start",
+    "all_frames": true
+  }],
+  "options_page": "options.html",
+  "icons": {
         "128": "icon.png"
-    }
+  }
 }

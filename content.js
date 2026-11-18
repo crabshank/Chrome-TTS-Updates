@@ -15,6 +15,10 @@ var prg=false;
 var lg_only=0;
 var lg_frms=false;
 var vtg_err=null;
+const PT_ATTR = 'data-tts-pt';
+let ptSeq = 0;
+let observer = null;
+let batchChain = Promise.resolve();
 
 function pickText(el){
 	return (el.innerText===null || typeof el.innerText==='undefined' || (el.innerText==='' && el.value !=='') ? el.value : el.innerText );
@@ -63,7 +67,7 @@ function blacklistMatch(array, t) {
 	var blSel='';
 	var blFcn=``;
     if (!((array.length == 1 && array[0] == "") || (array.length == 0))) {
-        ts = t.toLocaleLowerCase();
+        let ts = t.toLocaleLowerCase();
         for (var i = 0; i < array.length; i++) {
             let spl = array[i].split('*');
             spl = removeEls("", spl);
@@ -168,9 +172,6 @@ function restore_options()
 		}
 			if(isBl[0]){
 				fcn=(typeof isBl[3]!=='undefined')?isBl[3]:``;
-				if(fcn!==``){
-					setTimeout('let procText=(el,ln)=>{'+fcn+'};',0);
-				}
 				selec=isBl[2];
 				sbl=false;
 				getVoices();
@@ -212,7 +213,8 @@ if (typeof synth.onvoiceschanged !== 'undefined') {
 }
 
 function speak_line( txt,cancl){
-	return new Promise(function(resolve){ 
+	return new Promise(function(resolve){
+        try{
 let line=txt;
 if(cancl){
 	synth.cancel();
@@ -237,6 +239,7 @@ let speakText = new SpeechSynthesisUtterance(line);
 	speakText.onerror = (e) => {resolve();};
 		synth.speak(speakText);
 }
+}catch(e){ resolve(); }
 });
 }
 
@@ -250,110 +253,106 @@ async function speak_lines(){
 }
 
 
-function checker(){
-if(selec!=='' && !sbl  && voices.length>0){
-
-	if (typeof observer === "undefined") {
-		const observer = new MutationObserver((mutations) => {
-			let fnd_els=[]; 
-			let g=[];
-			for(let i=0, len=mutations.length; i<len;i++){
-				let t=mutations[i];
-				g=isValid_tag(t.target, selec);
-				if(g[1]){
-					fnd_els.push([t.target, g[0]]);
-				}
-				
-					let d=[...t.addedNodes];
-					if(d.length>0){
-						for(let k=0, len_k=d.length; k<len; k++){
-							g=isValid_tag(d[k], selec);
-							if(g[1]){
-								fnd_els.push([d[k], g[0]]);
-							}
-						}
-					}
-			}
-					
-				if(fnd_els.length>0){
-					for(let i=0, len=fnd_els.length; i<len;i++){
-							let m=fnd_els[i];
-							if (fcn!==``){
-								let pt=procText(m[0], m[1]);
-								if(typeof pt!=='undefined'){
-									m.push(pt); //Add output text m[2]
-								}else{
-									m.push(null); //Add output text m[2]
-								}					
-							}else{
-								m.push(null); //Add output text m[2]
-							}
-							
-							if(m[2]!==null){
-								m.push(true); //m[3]
-							}else{
-								m.push(false); //m[3]
-							}
-					}
-					
-					fnd_els=fnd_els.filter((f)=>{
-										if(f[3]){
-											return f[2].trim()!=='';
-										}else{
-											return f[1].trim()!=='';
-										}
-									});
-
-					if(lg_only>0){
-						let disps=fnd_els.map((f)=>{
-							if(f[3]){
-								return {el: f[0], out_text: f[2], raw_text: f[1], frame_URL: window.location.href};
-							}else{
-								return {el: f[0], out_text: f[1], frame_URL: window.location.href};
-							}	
-						});
-						
-						let cnt=0;
-						for(let k=0, len=fnd_els.length;k<len;k++ ){
-								if(cnt===0){
-									console.group('TTS Updates - "'+selec+'":');
-								}
-								console.log(disps[k]);
-								cnt++;
-						}
-						if(cnt>0){
-							console.groupEnd();
-						}
-					}
-					
-					if(lg_only<2){
-						let fnd_els_text=fnd_els.map((f)=>{
-							if(f[3]){
-								return f[2];
-							}else{
-								return f[1];
-							}
-						});
-						line_q.push(...fnd_els_text);
-						if(!prg){
-							speak_lines();
-						}
-					}
-				}
-				
-		});
-
-			observer.observe(document, {
-				subtree: true,
-				childList: true,
-				attributes: true,
-				attributeOldValue: true,
-				characterData: true,
-				characterDataOldValue: true
-			});
-
+async function askProcText(pairs){
+	const jobs=[];
+	try{
+		for(const p of pairs){
+			const t='pt'+(++ptSeq)+'-'+Math.random().toString(36).slice(2);
+			p[0].setAttribute(PT_ATTR,t);
+			jobs.push({t:t, ln:p[1]});
+		}
+		const reply=await chrome.runtime.sendMessage({type:'tts:procText', fcn:fcn, jobs:jobs});
+		if(reply && !reply.ok){ console.warn('TTS Updates - procText: '+reply.reason); }
+		const vals=(reply && reply.ok && Array.isArray(reply.values))?reply.values:[];
+		return pairs.map((p,i)=>{ return (typeof vals[i]==='undefined')?null:vals[i]; });
+	}catch(e){
+		console.error(e);
+		return pairs.map(()=>null);
+	}finally{
+		for(const p of pairs){ p[0].removeAttribute(PT_ATTR); }
 	}
 }
+
+function collectEls(mutations){
+	let fnd_els=[];
+	let g=[];
+	for(let i=0, len=mutations.length; i<len; i++){
+		let t=mutations[i];
+		if(t.type==='attributes' && t.attributeName===PT_ATTR){ continue; } // our own tagging
+		g=isValid_tag(t.target, selec);
+		if(g[1]){ fnd_els.push([t.target, g[0]]); }
+		let d=[...t.addedNodes];
+		for(let k=0, len_k=d.length; k<len_k; k++){   // was: k<len  (bug)
+			g=isValid_tag(d[k], selec);
+			if(g[1]){ fnd_els.push([d[k], g[0]]); }
+		}
+	}
+	return fnd_els;
+}
+
+async function handleBatch(fnd_els){
+	let ptMap=new Map();
+	if(fcn!==``){
+		let vals=await askProcText(fnd_els);                 // ONE round trip
+		for(let i=0, len=fnd_els.length; i<len; i++){ ptMap.set(fnd_els[i][0], vals[i]); }
+	}
+	let procText=(el,ln)=>{ return ptMap.get(el); };          // synchronous façade
+
+	for(let i=0, len=fnd_els.length; i<len; i++){
+		let m=fnd_els[i];
+		if (fcn!==``){
+			let pt=procText(m[0], m[1]);                     // <-- YOUR LINE, UNCHANGED
+			if(typeof pt!=='undefined'){
+				m.push(pt);
+			}else{
+				m.push(null);
+			}
+		}else{
+			m.push(null);
+		}
+		if(m[2]!==null){ m.push(true); }else{ m.push(false); }
+	}
+
+	fnd_els=fnd_els.filter((f)=>{
+		return f[3] ? f[2].trim()!=='' : f[1].trim()!=='';
+	});
+
+	if(lg_only>0){
+		let disps=fnd_els.map((f)=>{
+			if(f[3]){
+				return {el:f[0], out_text:f[2], raw_text:f[1], frame_URL:window.location.href};
+			}else{
+				return {el:f[0], out_text:f[1], frame_URL:window.location.href};
+			}
+		});
+		let cnt=0;
+		for(let k=0, len=fnd_els.length;k<len;k++){
+			if(cnt===0){ console.group('TTS Updates - "'+selec+'":'); }
+			console.log(disps[k]);
+			cnt++;
+		}
+		if(cnt>0){ console.groupEnd(); }
+	}
+
+	if(lg_only<2){
+		let fnd_els_text=fnd_els.map((f)=>{ return f[3] ? f[2] : f[1]; });
+		line_q.push(...fnd_els_text);
+		if(!prg){ speak_lines(); }
+	}
+}
+
+function checker(){
+	if(selec==='' || sbl || voices.length===0 || observer!==null){ return; }
+	observer=new MutationObserver((mutations)=>{
+		let fnd_els=collectEls(mutations);                    // collect synchronously
+		if(fnd_els.length>0){
+			batchChain=batchChain.then(()=>handleBatch(fnd_els)).catch((e)=>{console.error(e);});
+		}
+	});
+	observer.observe(document, {
+		subtree:true, childList:true, attributes:true,
+		attributeOldValue:true, characterData:true, characterDataOldValue:true
+	});
 }
 
 restore_options();
